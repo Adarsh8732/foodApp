@@ -34,17 +34,26 @@ userRouter
 // })
 authRouter
 .route('/signup')
-.post(singupUser)
+.post(setCreatedAt,singupUser)
 
 authRouter
 .route('/forgetpassword')
 .get(getPasswoed)
 .post(postPassword,validateEmail)
 
+
 app.use('/user-all',(req,res)=>{
     res.redirect("/user");
 })
-
+function setCreatedAt(req,res,next){
+    let obj = req.body;
+    int len = Object.keys(obj).length;
+    if(len==0){
+        return res.status(400).json({message:"cannot create user if req.body is empty"})
+    }
+    req.body.createdAt=new Date().toISOString();
+    next();
+}
 function getPasswoed(req,res){
     res.sendFile(path.join(__dirname,"./public/forgetpassword.html"));
 }
@@ -70,17 +79,30 @@ app.use((req,res)=>{
     res.sendFile(path.join(__dirname,"./public/404.html"));
 })
 
-
+let userModel = require('./Models/userModel');
 
 function singupUser(req,res){
-    let {email,password,name}=req.body;
-    user.push({email,name,password});
-    console.log("user backend",req.body);
-    res.json({
-        message: 'user singedup',
-        user:req.body
-        // user:user
-    })
+    // let {email,password,name}=req.body;
+    // user.push({email,name,password});
+    // console.log("user backend",req.body);
+    // res.json({
+    //     message: 'user singedup',
+    //     user:req.body
+    //     // user:user
+    // })
+    try{
+        let userObj = req.body;
+        let user = await userModel.create(userObj);
+        console.log(" user",user);
+        res.json({
+            message:'user signedup',
+            user:userObj
+        })
+    }
+    catch(err){
+        console.log(err);
+        res.json({message:err.message});
+    }
 }
 // app.get("/user",getUser);
 function getUser (req,res){
